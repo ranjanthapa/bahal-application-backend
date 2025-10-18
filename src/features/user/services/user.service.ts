@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Repository } from 'typeorm';
 import { hashPassword } from 'src/features/auth/utils/hash.util';
+import { USER_ERROR_MESSAGES } from 'src/common/constants/error-message.constants';
 
 @Injectable()
 export class UserService {
@@ -16,7 +17,7 @@ export class UserService {
     });
 
     if (isUserExists) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException(USER_ERROR_MESSAGES.USER_ALREADY_EXISTS);
     }
 
     const password = await hashPassword(userDto.password);

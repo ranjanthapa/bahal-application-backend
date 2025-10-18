@@ -9,7 +9,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
   canActivate(context: ExecutionContext) {
-    const isPublicAuth = this.reflector.get<boolean>(
+    const isPublic = this.reflector.get<boolean>(
       PUBLIC_ROUTE_KEY,
       context.getHandler()
     );
@@ -17,14 +17,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest();
     const token = request.headers['authorization']?.split(' ')[1];
 
-    if (token && isPublicAuth) {
+    if (token && isPublic) {
       try {
         return super.canActivate(context);
       } catch (error) {
         return true;
       }
     }
-    if (isPublicAuth) {
+    if (isPublic) {
       return true;
     }
 

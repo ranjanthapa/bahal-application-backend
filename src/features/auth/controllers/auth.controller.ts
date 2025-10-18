@@ -1,11 +1,12 @@
-import { Controller, Post } from '@nestjs/common';
-import { AuthService } from '../services/auth.service';
+import { Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { ZodBody } from 'src/common/decorators/zod-body.decorator';
 import {
   CreateUserDTO,
   UserSchema,
 } from 'src/features/user/schemas/user.schema';
-import { LoginDTO, LoginSchema } from 'src/features/user/schemas/login.schema';
+import { AuthService } from '../services/auth.service';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
+import { User } from 'src/features/user/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -16,8 +17,10 @@ export class AuthController {
     return await this.authService.register(userDto);
   }
 
+  @UseGuards(LocalAuthGuard)
   @Post('/login')
-  async login(@ZodBody(LoginSchema) loginDto: LoginDTO) {
-    return await this.authService.login(loginDto);
+  async login(@Request() req: { user: User }) {
+    return this.authService.login(req.user);
   }
+
 }
