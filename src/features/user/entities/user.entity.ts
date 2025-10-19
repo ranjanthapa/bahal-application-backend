@@ -1,7 +1,7 @@
 import { TimeStampedEntity } from 'src/common/entities/base-timestampz.entity';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
+@Entity("users")
 export class User extends TimeStampedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
