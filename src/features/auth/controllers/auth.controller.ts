@@ -1,12 +1,12 @@
 import { Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { ZodBody } from 'src/common/decorators/zod-body.decorator';
+import { User } from 'src/features/user/entities/user.entity';
 import {
   CreateUserDTO,
   UserSchema,
 } from 'src/features/user/schemas/user.schema';
-import { AuthService } from '../services/auth.service';
 import { LocalAuthGuard } from '../guards/local-auth.guard';
-import { User } from 'src/features/user/entities/user.entity';
+import { AuthService } from '../services/auth.service';
 
 @Controller('auth')
 export class AuthController {
