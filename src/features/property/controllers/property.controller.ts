@@ -5,6 +5,7 @@ import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
 import { PropertyDTO, PropertySchema } from '../schemas/property.schema';
 import { PropertyService } from '../services/property.service';
+import { PROPERTY_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
 
 @Controller('properties')
 export class PropertyController {
@@ -25,7 +26,7 @@ export class PropertyController {
 
   @Get('/:id')
   async getById(
-    @Param('id', UUIDValidationPipe)
+    @Param('id', new UUIDValidationPipe(PROPERTY_ERROR_MESSAGE.INVALID_ID))
     id: string,
     @CurrentUser() user: JwtPayload,
   ) {
@@ -35,7 +36,7 @@ export class PropertyController {
   @Delete('/:id')
   @HttpCode(204)
   async delete(
-    @Param('id', UUIDValidationPipe)
+    @Param('id', new UUIDValidationPipe(PROPERTY_ERROR_MESSAGE.INVALID_ID))
     id: string,
     @CurrentUser() user: JwtPayload,
   ) {
