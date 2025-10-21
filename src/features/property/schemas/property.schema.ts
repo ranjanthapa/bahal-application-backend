@@ -42,4 +42,7 @@ export const PropertySchema = z.object({
   roomsPerFloor: z.number().int().positive(),
 });
 
+export const UpdatePropertySchema = PropertySchema.partial();
+
 export type PropertyDTO = z.infer<typeof PropertySchema>;
+export type UpdatePropertyDTO = z.infer<typeof UpdatePropertySchema>;
