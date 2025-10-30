@@ -16,3 +16,9 @@ export const PROPERTY_ERROR_MESSAGE = {
   NOT_FOUND: 'Property not found.',
   INVALID_ID: 'Invalid property id',
 };
+
+export const RENTER_ERROR_MESSAGE = {
+  NOT_FOUND: 'Renter not found.',
+  INVALID_ID: 'Invalid renter id',
+
+};
