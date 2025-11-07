@@ -5,6 +5,7 @@ import {
   UpdateContactNumberSchema,
 } from './contact-number.schema';
 import { RenterDocumentSchema } from './renter-document.schema';
+import { RenterPricingSchema } from './renter-pricing.schema';
 
 export const RenterSchema = z.object({
   fullName: z
@@ -31,7 +32,11 @@ export const RenterSchema = z.object({
     })
     .int()
     .positive({ message: 'Number of rooms must be greater than 0' }),
+
+  setGlobalPrice: z.boolean().default(true),
+  pricing: RenterPricingSchema.optional(),
 });
+
 
 export const UpdateRenterSchema = RenterSchema.extend({
   contactNumbers: UpdateContactNumberSchema.optional(),
