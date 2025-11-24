@@ -9,20 +9,32 @@ import { Repository } from 'typeorm';
 import { Property } from '../entities/property.entity';
 import { PropertyDTO, UpdatePropertyDTO } from '../schemas/property.schema';
 import { PROPERTY_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
+import { RenterDTO } from 'src/features/renter/schemas/renter.schema';
+import { RenterService } from 'src/features/renter/services/renter.service';
 
 @Injectable()
 export class PropertyService {
   constructor(
     @InjectRepository(Property)
     private readonly propetyRepo: Repository<Property>,
+    private readonly renterService: RenterService,
   ) {}
 
-  async add(propertyDto: PropertyDTO, user: JwtPayload) {
+  async create(propertyDto: PropertyDTO, user: JwtPayload) {
     const property = this.propetyRepo.create({
       ...propertyDto,
       user: { id: user.id },
     });
     return await this.propetyRepo.save(property);
+  }
+
+  async createRenter(
+    propertyId: string,
+    renterDto: RenterDTO,
+    owner: JwtPayload,
+  ) {
+    const property = await this.getPropertyById(propertyId, owner);
+    return await this.renterService.create(property, renterDto, owner);
   }
 
   async getProperties(user: JwtPayload): Promise<Property[]> {
@@ -58,7 +70,6 @@ export class PropertyService {
       { id, user: { id: user.id } },
       data,
     );
-    console.log({ result: result });
     if (result.affected === 0) {
       throw new NotFoundException(PROPERTY_ERROR_MESSAGE.NOT_FOUND);
     }

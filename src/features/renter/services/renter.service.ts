@@ -1,15 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import Decimal from 'decimal.js';
 import { RENTER_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
+import { Property } from 'src/features/property/entities/property.entity';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { ContactNumber } from '../entities/contact-number.entity';
 import { RenterDocument } from '../entities/renter-document.entity';
-import { Renter } from '../entities/renter.entity';
-import { RenterDTO, UpdateRenterDTO } from '../schemas/renter.schema';
-import { RenterPricingDTO } from '../schemas/renter-pricing.schema';
-import Decimal from 'decimal.js';
 import { RenterPricing } from '../entities/renter-pricing.entity';
+import { Renter } from '../entities/renter.entity';
+import { RenterPricingDTO } from '../schemas/renter-pricing.schema';
+import { RenterDTO, UpdateRenterDTO } from '../schemas/renter.schema';
 
 @Injectable()
 export class RenterService {
@@ -18,7 +19,11 @@ export class RenterService {
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
-  async add(renterDto: RenterDTO, owner: JwtPayload): Promise<Renter> {
+  async create(
+    property: Property,
+    renterDto: RenterDTO,
+    owner: JwtPayload,
+  ): Promise<Renter> {
     return await this.dataSource.transaction(async (manager) => {
       const { pricing, ...rest } = renterDto;
 
@@ -26,6 +31,7 @@ export class RenterService {
         const renter = manager.create(Renter, {
           ...rest,
           owner: { id: owner.id },
+          property: property,
         });
         return await manager.save(renter);
       } else {
@@ -34,6 +40,7 @@ export class RenterService {
           ...renterDto,
           pricing: parsedPricing,
           owner: { id: owner.id },
+          property: property,
         });
         return await manager.save(renter);
       }
@@ -47,6 +54,65 @@ export class RenterService {
         new Decimal(value).toFixed(2),
       ]),
     );
+  }
+
+  async findRenterByIdWithFields(
+    id: string,
+    owner: JwtPayload,
+    fields: (keyof Renter)[],
+  ): Promise<Renter> {
+    const renter = await this.renterRepo
+      .createQueryBuilder('renter')
+      .select(['renter.id', ...fields.map((field) => `renter.${field}`)])
+      .leftJoinAndSelect('renter.pricing', 'pricing')
+      .where('renter.id=:id AND renter.owner.id=:ownerId', {
+        id,
+        ownerId: owner.id,
+      })
+      .getOne();
+
+    if (!renter) throw new NotFoundException(RENTER_ERROR_MESSAGE.NOT_FOUND);
+    return renter;
+  }
+
+  async findRenterPricing(renterId: string, ownerId: string) {
+    const renter = await this.renterRepo
+      .createQueryBuilder('renter')
+      .select(['renter.setGlobalPrice'])
+      .where('renter.id = :renterId', { renterId })
+      .andWhere('renter.owner = :ownerId', { ownerId })
+      .getRawOne();
+    if (!renter) {
+      throw new NotFoundException('Renter not found');
+    }
+
+    const isGlobal = renter.renter_set_global_price;
+    if (isGlobal) {
+      return await this.renterRepo
+        .createQueryBuilder('renter')
+        .leftJoin('renter.property', 'property')
+        .select([
+          'renter.numberOfRooms as "numberOfRoom"',
+          'property.rentPerRoom AS "rentPerRoom"',
+          'property.waterRate AS "waterRate"',
+          'property.electricityRate AS "electricityRate"',
+        ])
+        .where('renter.id =:renterId', { renterId })
+        .andWhere('renter.owner =:ownerId', { ownerId })
+        .getRawOne();
+    }
+    return await this.renterRepo
+      .createQueryBuilder('renter')
+      .leftJoin('renter.pricing', 'pricing')
+      .select([
+        'renter.numberOfRooms as "numberOfRoom"',
+        'pricing.rentPerRoom AS "rentPerRoom"',
+        'pricing.waterRate AS "waterRate"',
+        'pricing.electricityRate AS "electricityRate"',
+      ])
+      .where('renter.id =:renterId', { renterId })
+      .andWhere('renter.owner = :ownerId', { ownerId })
+      .getRawOne();
   }
 
   async getRenterById(id: string, owner: JwtPayload): Promise<Renter> {
@@ -82,8 +148,8 @@ export class RenterService {
         await manager.delete(RenterDocument, renter.documents.id);
       }
 
-      if(renter.pricing){
-        await manager.delete(RenterPricing, renter.pricing.id)
+      if (renter.pricing) {
+        await manager.delete(RenterPricing, renter.pricing.id);
       }
 
       await manager.delete(ContactNumber, renter.contactNumbers.id);
@@ -135,7 +201,6 @@ export class RenterService {
     }
 
     if (data.setGlobalPrice === true && renter.setGlobalPrice === false) {
-      console.log(renter.pricing);
       await manager.delete(RenterPricing, renter.pricing!.id);
       renter.pricing = null;
     }
