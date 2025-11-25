@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BillStatus } from '../enums/bill-status.enum';
+import { User } from 'src/features/user/entities/user.entity';
 
 @Entity('bills')
 export class Bill {
@@ -16,10 +17,6 @@ export class Bill {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount: string;
 
-  @ManyToOne(() => Renter, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'renter_id' })
-  renter: Renter;
-
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalRoomRent: string;
 
@@ -27,17 +24,30 @@ export class Bill {
   totalElectricityAmount: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  electricityUnit: string;
+  electricityAmountPerUnit: string;
 
-  @Column({type: 'date'})
-  billingDate:Date;
-  
-  @Column({type: 'varchar', length: 250, nullable: true})
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  totalElectricityConsumed: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  waterAmount: string;
+
+  @Column({ type: 'date' })
+  billingDate: Date;
+
+  @Column({ type: 'varchar', length: 250, nullable: true })
   note: string | null;
 
-  @Column({type: 'enum', enum: BillStatus})
+  @Column({ type: 'enum', enum: BillStatus })
   status: BillStatus;
 
-  @Column({type: 'jsonb', nullable: true})
+  @Column({ type: 'jsonb', nullable: true })
   otherCharges: object | null;
+
+  @ManyToOne(() => Renter, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'renter_id' })
+  renter: Renter;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  owner: User;
 }

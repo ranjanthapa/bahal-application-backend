@@ -1,7 +1,12 @@
-import { Controller, Param, Post } from '@nestjs/common';
+import { Controller, Param, Patch, Post } from '@nestjs/common';
 import { BillService } from '../services/bill.service';
 import { ZodBody } from 'src/common/decorators/zod-body.decorator';
-import { BillDTO, BillSchema } from '../schemas/bill.schema';
+import {
+  BillDTO,
+  BillSchema,
+  UpdateBillDto,
+  UpdateBillSchema,
+} from '../schemas/bill.schema';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
 import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
@@ -20,7 +25,17 @@ export class BillController {
   ) {
     return await this.billService.create(renterId, billDTO, owner);
   }
+
+  @Patch('bills/:id')
+  async update(
+    @Param('id', UUIDValidationPipe)
+    id: string,
+    @ZodBody(UpdateBillSchema) updateBillDTO: UpdateBillDto,
+  ) {
+    return await this.billService.update(id,updateBillDTO )
+  }
 }
 
-
 // api/bill/renterId or api/renter/id/bill
+
+// api/renters/:id/bills/:id

@@ -7,7 +7,7 @@ import {
 
 @Injectable()
 export class UUIDValidationPipe extends ParseUUIDPipe implements PipeTransform {
-  constructor(message: string) {
+  constructor(message = "Invalid Id") {
     super({
       exceptionFactory: () => new BadRequestException(message),
     });

@@ -1,4 +1,6 @@
 export enum BillStatus {
     DRAFT='draft',
-    COMMITTED = 'committed'
+    FINALIZED = 'finalized',
+    PAID = 'paid',
+    CANCEL = 'cancel'
 }

@@ -2,7 +2,7 @@ import z from 'zod';
 import { BillStatus } from '../enums/bill-status.enum';
 
 export const BillSchema = z.object({
-  electricityUnit: z.coerce.number().nonnegative(),
+  totalElectricityConsumed: z.coerce.number().nonnegative(),
   billingMonth: z.coerce.date(),
   note: z.string().min(3).max(250).optional(),
   status: z.nativeEnum(BillStatus),
@@ -16,4 +16,8 @@ export const BillSchema = z.object({
     .optional(),
 });
 
+export const UpdateBillSchema = BillSchema.partial();
+
 export type BillDTO = z.infer<typeof BillSchema>;
+export type UpdateBillDto = z.infer<typeof UpdateBillSchema>;
+
