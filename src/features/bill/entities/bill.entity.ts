@@ -1,16 +1,17 @@
+import { TimeStampedEntity } from 'src/common/entities/base-timestampz.entity';
 import { Renter } from 'src/features/renter/entities/renter.entity';
+import { User } from 'src/features/user/entities/user.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 import { BillStatus } from '../enums/bill-status.enum';
-import { User } from 'src/features/user/entities/user.entity';
 
 @Entity('bills')
-export class Bill {
+export class Bill extends TimeStampedEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

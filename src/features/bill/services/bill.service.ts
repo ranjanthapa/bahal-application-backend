@@ -12,6 +12,11 @@ import { BillDTO, UpdateBillDto } from '../schemas/bill.schema';
 import Decimal from 'decimal.js';
 import { BillStatus } from '../enums/bill-status.enum';
 import { BILL_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
+import { BillFilterDTO } from '../schemas/bill.filter.schema';
+import {
+  applyPagination,
+  createPaginatedResponse,
+} from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class BillService {
@@ -95,5 +100,46 @@ export class BillService {
     return bill;
   }
 
-  async getBills(userId: string) {}
+  async getRenterBills(
+    filterDTO: BillFilterDTO,
+    renterId: string,
+    owner: JwtPayload,
+  ) {
+    const {
+      status,
+      billingDateFrom,
+      billingDateTo,
+      page = 1,
+      pageSize = 10,
+    } = filterDTO;
+
+    const qb = this.billRepo.createQueryBuilder('bill');
+    const alias = qb.alias;
+
+    qb.where(`${alias}.renter = :renterId`, { renterId });
+
+    qb.andWhere(`${alias}.owner = :ownerId`, { ownerId: owner.id });
+
+    if (status) {
+      qb.andWhere(`${alias}.status = :status`, { status });
+    }
+
+    if (billingDateFrom) {
+      qb.andWhere(`${alias}.billingDate >= :billingDateFrom`, {
+        billingDateFrom,
+      });
+    }
+
+    if (billingDateTo) {
+      qb.andWhere(`${alias}.billingDate <= :billingDateTo`, {
+        billingDateTo,
+      });
+    }
+
+    qb.orderBy(`${alias}.billingDate`, 'DESC');
+    applyPagination(qb, page, pageSize);
+
+    const [bills, total] = await qb.getManyAndCount();
+    return createPaginatedResponse(bills, page, pageSize, total);
+  }
 }
