@@ -17,6 +17,7 @@ import {
   applyPagination,
   createPaginatedResponse,
 } from 'src/common/utils/pagination.util';
+import { BillPreviewDTO } from '../schemas/preview.bill.schema';
 
 @Injectable()
 export class BillService {
@@ -24,7 +25,8 @@ export class BillService {
     @InjectRepository(Bill) private readonly billRepo: Repository<Bill>,
     private readonly renterService: RenterService,
   ) {}
-  async create(renterId: string, data: BillDTO, owner: JwtPayload) {
+
+  async preview(renterId: string, data: BillDTO, owner: JwtPayload) {
     const price = await this.renterService.findRenterPricing(
       renterId,
       owner.id,
@@ -50,21 +52,29 @@ export class BillService {
       .plus(waterAmount)
       .plus(totalOtherCharge);
 
-    const bill = this.billRepo.create({
-      totalAmount: totalAmount.toString(),
-      totalRoomRent: totalRoomRent.toString(),
+    return {
+      totalAmount: totalAmount.toFixed(2),
+      totalRoomRent: totalRoomRent.toFixed(2),
       electricityAmountPerUnit: price.electricityRate,
-      totalElectricityAmount: totalElectricityAmount.toString(),
-      totalElectricityConsumed: data.totalElectricityConsumed.toString(),
+      totalElectricityAmount: totalElectricityAmount.toFixed(2),
+      totalElectricityConsumed: data.totalElectricityConsumed.toFixed(2),
       billingDate: data.billingMonth,
-      waterAmount: waterAmount.toString(),
+      waterAmount: waterAmount.toFixed(2),
       note: data.note ?? null,
       status: data.status,
       otherCharges: data.otherCharges ?? null,
-      renter: { id: renterId },
-      owner: { id: owner.id },
-    });
+      renter: renterId,
+      owner: owner.id,
+    };
+  }
 
+  async create(previewDTO: BillPreviewDTO) {
+    const { renter, owner, ...otherFields } = previewDTO;
+    const bill = this.billRepo.create({
+      ...otherFields,
+      renter: { id: renter },
+      owner: { id: owner },
+    });
     return await this.billRepo.save(bill);
   }
 

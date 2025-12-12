@@ -1,40 +1,41 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseInterceptors,
-} from '@nestjs/common';
-import { BillService } from '../services/bill.service';
+import { Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { RENTER_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { SkipGlobalInterceptors } from 'src/common/decorators/skip-global.decorator';
 import { ZodBody } from 'src/common/decorators/zod-body.decorator';
+import { ZodQuery } from 'src/common/decorators/zod-query.decorator';
+import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
+import { JwtPayload } from 'src/common/types/jwt-payload.type';
+import { BillFilterDTO, billFilterSchema } from '../schemas/bill.filter.schema';
 import {
   BillDTO,
   BillSchema,
   UpdateBillDto,
   UpdateBillSchema,
 } from '../schemas/bill.schema';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { JwtPayload } from 'src/common/types/jwt-payload.type';
-import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
-import { RENTER_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
-import { ZodQuery } from 'src/common/decorators/zod-query.decorator';
-import { billFilterSchema, BillFilterDTO } from '../schemas/bill.filter.schema';
-import { SkipInterceptor } from 'src/common/interceptors/skip-global.interceptor';
-import { SkipGlobalInterceptors } from 'src/common/decorators/skip-global.decorator';
+import { BillService } from '../services/bill.service';
+import {
+  BillPreviewDTO,
+  BillPreviewSchema,
+} from '../schemas/preview.bill.schema';
 
 @Controller()
 export class BillController {
   constructor(private readonly billService: BillService) {}
 
-  @Post('renters/:id/bills')
-  async add(
+  @Post('renters/:id/bills/preview')
+  async previewBill(
     @Param('id', new UUIDValidationPipe(RENTER_ERROR_MESSAGE.INVALID_ID))
     renterId: string,
     @ZodBody(BillSchema) billDTO: BillDTO,
     @CurrentUser() owner: JwtPayload,
   ) {
-    return await this.billService.create(renterId, billDTO, owner);
+    return await this.billService.preview(renterId, billDTO, owner);
+  }
+
+  @Post('/bills')
+  async add(@ZodBody(BillPreviewSchema) previewDto: BillPreviewDTO) {
+    return await this.billService.create(previewDto);
   }
 
   @Patch('bills/:id')
@@ -53,7 +54,7 @@ export class BillController {
   ) {
     return await this.billService.getBillById(id);
   }
-  
+
   @SkipGlobalInterceptors()
   @Get('renters/:id/bills')
   async getAllRenterBill(
