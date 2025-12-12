@@ -20,5 +20,13 @@ export const PROPERTY_ERROR_MESSAGE = {
 export const RENTER_ERROR_MESSAGE = {
   NOT_FOUND: 'Renter not found.',
   INVALID_ID: 'Invalid renter id',
+};
 
+export const BILL_ERROR_MESSAGE = {
+  NOT_FOUND: 'Bill not found',
+  UPDATE_PAID_BILL: "Update on payment bill can't be done",
+  UPDATE_FINALIZED_BILL:
+    "Update on finalized bill can't be done, you can only cancel",
+  UPDATE_CANCELLED_BILL: "Update on cancel bill can't be done",
+  UPDATE_DRAFT_BILL: 'Finalized bill can not be updated',
 };

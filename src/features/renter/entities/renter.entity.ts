@@ -11,6 +11,8 @@ import { ContactNumber } from './contact-number.entity';
 import { RenterDocument } from './renter-document.entity';
 import { RenterStatus } from '../enums/renter-status.enum';
 import { TimeStampedEntity } from 'src/common/entities/base-timestampz.entity';
+import { RenterPricing } from './renter-pricing.entity';
+import { Property } from 'src/features/property/entities/property.entity';
 
 @Entity('renters')
 export class Renter extends TimeStampedEntity {
@@ -47,6 +49,20 @@ export class Renter extends TimeStampedEntity {
   @Column({ type: 'int' })
   numberOfRooms: number;
 
+  @Column({ type: 'boolean', default: true })
+  setGlobalPrice: boolean;
+
+  @OneToOne(() => RenterPricing, {
+    onDelete: 'CASCADE',
+    cascade: true,
+    nullable: true,
+  })
+  @JoinColumn({ name: 'pricing_id' })
+  pricing: RenterPricing | null;
+
   @ManyToOne(() => User)
   owner: User;
+
+  @ManyToOne(() => Property)
+  property: Property;
 }

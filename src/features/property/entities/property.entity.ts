@@ -5,7 +5,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 
 @Entity('properties')
@@ -23,7 +23,7 @@ export class Property extends TimeStampedEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2})
   waterRate: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })

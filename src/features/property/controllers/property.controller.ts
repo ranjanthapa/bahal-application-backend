@@ -7,10 +7,15 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { PROPERTY_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { ZodBody } from 'src/common/decorators/zod-body.decorator';
 import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
+import {
+  RenterDTO,
+  RenterSchema,
+} from 'src/features/renter/schemas/renter.schema';
 import {
   PropertyDTO,
   PropertySchema,
@@ -18,18 +23,29 @@ import {
   UpdatePropertySchema,
 } from '../schemas/property.schema';
 import { PropertyService } from '../services/property.service';
-import { PROPERTY_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
 
 @Controller('properties')
 export class PropertyController {
-  constructor(private readonly propertyService: PropertyService) {}
+  constructor(
+    private readonly propertyService: PropertyService,
+  ) {}
 
   @Post()
   async create(
     @ZodBody(PropertySchema) propertyDto: PropertyDTO,
     @CurrentUser() user: JwtPayload,
   ) {
-    return await this.propertyService.add(propertyDto, user);
+    return await this.propertyService.create(propertyDto, user);
+  }
+
+  @Post(':id/renters')
+  async addRenter(
+    @Param('id', new UUIDValidationPipe(PROPERTY_ERROR_MESSAGE.INVALID_ID))
+    id: string,
+    @ZodBody(RenterSchema) renterDto: RenterDTO,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.propertyService.createRenter(id, renterDto, user)
   }
 
   @Get()

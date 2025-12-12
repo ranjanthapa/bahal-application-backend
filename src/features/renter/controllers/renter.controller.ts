@@ -4,33 +4,22 @@ import {
   Get,
   HttpCode,
   Param,
-  Patch,
-  Post,
+  Patch
 } from '@nestjs/common';
-import { ZodBody } from 'src/common/decorators/zod-body.decorator';
-import {
-  RenterDTO,
-  RenterSchema,
-  UpdateRenterDTO,
-  UpdateRenterSchema,
-} from '../schemas/renter.schema';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { JwtPayload } from 'src/common/types/jwt-payload.type';
-import { RenterService } from '../services/renter.service';
-import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
 import { RENTER_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { ZodBody } from 'src/common/decorators/zod-body.decorator';
+import { UUIDValidationPipe } from 'src/common/pipes/uuid-validation.pipe';
+import { JwtPayload } from 'src/common/types/jwt-payload.type';
+import {
+  UpdateRenterDTO,
+  UpdateRenterSchema
+} from '../schemas/renter.schema';
+import { RenterService } from '../services/renter.service';
 
 @Controller('renters')
 export class RenterController {
   constructor(private readonly renterService: RenterService) {}
-
-  @Post()
-  async create(
-    @ZodBody(RenterSchema) renterDto: RenterDTO,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return await this.renterService.add(renterDto, user);
-  }
 
   @Get('/:id')
   async getById(
@@ -63,7 +52,6 @@ export class RenterController {
     @ZodBody(UpdateRenterSchema) updatedDto: UpdateRenterDTO,
     @CurrentUser() owner: JwtPayload,
   ) {
-    console.log("validation passed", updatedDto);
     return await this.renterService.updateById(id, updatedDto, owner);
   }
 }
