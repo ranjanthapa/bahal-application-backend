@@ -35,8 +35,11 @@ export class BillService {
       price.rentPerRoom,
     );
 
-    const totalElectricityAmount = new Decimal(price.electricityRate).mul(
-      data.totalElectricityConsumed,
+    // get the previous month electiricity unit
+
+
+    const totalElectricityCharge = new Decimal(price.electricityChargePerUnit).mul(
+      data.electricityUnits,
     );
     const waterAmount = new Decimal(price.waterRate);
     let totalOtherCharge = new Decimal(0);
@@ -48,18 +51,18 @@ export class BillService {
     }
 
     const totalAmount = totalRoomRent
-      .plus(totalElectricityAmount)
+      .plus(totalElectricityCharge)
       .plus(waterAmount)
       .plus(totalOtherCharge);
 
     return {
       totalAmount: totalAmount.toFixed(2),
       totalRoomRent: totalRoomRent.toFixed(2),
-      electricityAmountPerUnit: price.electricityRate,
-      totalElectricityAmount: totalElectricityAmount.toFixed(2),
-      totalElectricityConsumed: data.totalElectricityConsumed.toFixed(2),
+      electricityChargePerUnit: price.electricityChargePerUnit,
+      totalElectricityCharge: totalElectricityCharge.toFixed(2),
+      electricityUnits: data.electricityUnits.toFixed(2),
       billingDate: data.billingMonth,
-      waterAmount: waterAmount.toFixed(2),
+      waterCharge: waterAmount.toFixed(2),
       note: data.note ?? null,
       status: data.status,
       otherCharges: data.otherCharges ?? null,
@@ -67,6 +70,9 @@ export class BillService {
       owner: owner.id,
     };
   }
+
+
+  private async getPreviousMonthElectricityUnit(){}
 
   async create(previewDTO: BillPreviewDTO) {
     const { renter, owner, ...otherFields } = previewDTO;

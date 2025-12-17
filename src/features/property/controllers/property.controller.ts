@@ -23,11 +23,17 @@ import {
   UpdatePropertySchema,
 } from '../schemas/property.schema';
 import { PropertyService } from '../services/property.service';
+import {
+  CreateElectricityMeterDTO,
+  ElectricitySchema,
+} from '../schemas/electricity-meter.schema';
+import { ElectricityMeterService } from '../services/electricity-meter.service';
 
 @Controller('properties')
 export class PropertyController {
   constructor(
     private readonly propertyService: PropertyService,
+    private readonly electricityMeterService: ElectricityMeterService,
   ) {}
 
   @Post()
@@ -45,7 +51,7 @@ export class PropertyController {
     @ZodBody(RenterSchema) renterDto: RenterDTO,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.propertyService.createRenter(id, renterDto, user)
+    return this.propertyService.addRenter(id, renterDto, user);
   }
 
   @Get()
@@ -80,5 +86,19 @@ export class PropertyController {
     @ZodBody(UpdatePropertySchema) updatePropertyDto: UpdatePropertyDTO,
   ) {
     return await this.propertyService.updateById(id, user, updatePropertyDto);
+  }
+
+  @Post(':id/electricity-meter')
+  async add(
+    @Param('id', new UUIDValidationPipe(PROPERTY_ERROR_MESSAGE.INVALID_ID))
+    id: string,
+    @CurrentUser() user: JwtPayload,
+    @ZodBody(ElectricitySchema) electricityMeterDTO: CreateElectricityMeterDTO,
+  ) {
+    return await this.electricityMeterService.create(
+      id,
+      electricityMeterDTO,
+      user,
+    );
   }
 }

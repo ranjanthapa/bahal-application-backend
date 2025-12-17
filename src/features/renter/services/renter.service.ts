@@ -11,12 +11,14 @@ import { RenterPricing } from '../entities/renter-pricing.entity';
 import { Renter } from '../entities/renter.entity';
 import { RenterPricingDTO } from '../schemas/renter-pricing.schema';
 import { RenterDTO, UpdateRenterDTO } from '../schemas/renter.schema';
+import { ElectricityMeterService } from 'src/features/property/services/electricity-meter.service';
 
 @Injectable()
 export class RenterService {
   constructor(
     @InjectRepository(Renter) private readonly renterRepo: Repository<Renter>,
     @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly electricityMeterService: ElectricityMeterService,
   ) {}
 
   async create(
@@ -25,25 +27,26 @@ export class RenterService {
     owner: JwtPayload,
   ): Promise<Renter> {
     return await this.dataSource.transaction(async (manager) => {
-      const { pricing, ...rest } = renterDto;
+      const { pricing, setGlobalPrice, electricityMeterId, ...rest } =
+        renterDto;
 
-      if (renterDto.setGlobalPrice) {
-        const renter = manager.create(Renter, {
-          ...rest,
-          owner: { id: owner.id },
-          property: property,
-        });
-        return await manager.save(renter);
-      } else {
-        const parsedPricing = this.parseIntoDecimal(pricing!);
-        const renter = manager.create(Renter, {
-          ...renterDto,
-          pricing: parsedPricing,
-          owner: { id: owner.id },
-          property: property,
-        });
-        return await manager.save(renter);
+      const electricityMeter =
+        await this.electricityMeterService.findMeterById(electricityMeterId);
+
+      const renter = manager.create(Renter, {
+        ...rest,
+        setGlobalPrice,
+        electricityMeter: electricityMeter,
+        owner: { id: owner.id },
+        property: property,
+      });
+
+      if (!setGlobalPrice && pricing) {
+        const parsedPricing = this.parseIntoDecimal(pricing);
+        renter.pricing = manager.create(RenterPricing, parsedPricing);
       }
+
+      return await this.renterRepo.save(renter);
     });
   }
 
@@ -95,7 +98,7 @@ export class RenterService {
           'renter.numberOfRooms as "numberOfRoom"',
           'property.rentPerRoom AS "rentPerRoom"',
           'property.waterRate AS "waterRate"',
-          'property.electricityRate AS "electricityRate"',
+          'property.electricityRate AS "electricityChargePerUnit"',
         ])
         .where('renter.id =:renterId', { renterId })
         .andWhere('renter.owner =:ownerId', { ownerId })
@@ -108,7 +111,7 @@ export class RenterService {
         'renter.numberOfRooms as "numberOfRoom"',
         'pricing.rentPerRoom AS "rentPerRoom"',
         'pricing.waterRate AS "waterRate"',
-        'pricing.electricityRate AS "electricityRate"',
+        'pricing.electricityRate AS "electricityChargePerUnit"',
       ])
       .where('renter.id =:renterId', { renterId })
       .andWhere('renter.owner = :ownerId', { ownerId })

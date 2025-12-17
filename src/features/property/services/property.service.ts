@@ -28,7 +28,7 @@ export class PropertyService {
     return await this.propetyRepo.save(property);
   }
 
-  async createRenter(
+  async addRenter(
     propertyId: string,
     renterDto: RenterDTO,
     owner: JwtPayload,

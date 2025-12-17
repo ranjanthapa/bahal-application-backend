@@ -22,16 +22,19 @@ export class Bill extends TimeStampedEntity {
   totalRoomRent: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalElectricityAmount: string;
+  totalElectricityCharge: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  electricityAmountPerUnit: string;
+  electricityChargePerUnit: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalElectricityConsumed: string;
+  electricityUnits: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  waterAmount: string;
+  electricityConsumed: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  waterCharge: string;
 
   @Column({ type: 'date' })
   billingDate: Date;
