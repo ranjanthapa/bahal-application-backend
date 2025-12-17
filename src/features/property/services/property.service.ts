@@ -1,23 +1,19 @@
 import {
-  BadRequestException,
   Injectable,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PROPERTY_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
 import { Repository } from 'typeorm';
 import { Property } from '../entities/property.entity';
 import { PropertyDTO, UpdatePropertyDTO } from '../schemas/property.schema';
-import { PROPERTY_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
-import { RenterDTO } from 'src/features/renter/schemas/renter.schema';
-import { RenterService } from 'src/features/renter/services/renter.service';
 
 @Injectable()
 export class PropertyService {
   constructor(
     @InjectRepository(Property)
     private readonly propetyRepo: Repository<Property>,
-    private readonly renterService: RenterService,
   ) {}
 
   async create(propertyDto: PropertyDTO, user: JwtPayload) {
@@ -26,15 +22,6 @@ export class PropertyService {
       user: { id: user.id },
     });
     return await this.propetyRepo.save(property);
-  }
-
-  async addRenter(
-    propertyId: string,
-    renterDto: RenterDTO,
-    owner: JwtPayload,
-  ) {
-    const property = await this.getPropertyById(propertyId, owner);
-    return await this.renterService.create(property, renterDto, owner);
   }
 
   async getProperties(user: JwtPayload): Promise<Property[]> {

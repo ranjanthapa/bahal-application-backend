@@ -28,12 +28,14 @@ import {
   ElectricitySchema,
 } from '../schemas/electricity-meter.schema';
 import { ElectricityMeterService } from '../services/electricity-meter.service';
+import { RenterService } from 'src/features/renter/services/renter.service';
 
 @Controller('properties')
 export class PropertyController {
   constructor(
     private readonly propertyService: PropertyService,
     private readonly electricityMeterService: ElectricityMeterService,
+    private readonly renterService: RenterService,
   ) {}
 
   @Post()
@@ -51,7 +53,12 @@ export class PropertyController {
     @ZodBody(RenterSchema) renterDto: RenterDTO,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.propertyService.addRenter(id, renterDto, user);
+    const property = await this.propertyService.getPropertyById(id, user);
+    return await this.renterService.create(
+      property,
+      renterDto,
+      user,
+    );
   }
 
   @Get()
