@@ -1,7 +1,7 @@
 import {
   ConflictException,
   Injectable,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import Decimal from 'decimal.js';
@@ -17,6 +17,7 @@ import { RenterPricing } from '../entities/renter-pricing.entity';
 import { Renter } from '../entities/renter.entity';
 import { RenterPricingDTO } from '../schemas/renter-pricing.schema';
 import { RenterDTO, UpdateRenterDTO } from '../schemas/renter.schema';
+import { RenterStatus } from '../enums/renter-status.enum';
 
 @Injectable()
 export class RenterService {
@@ -182,10 +183,25 @@ export class RenterService {
     return await this.dataSource.transaction(async (manager) => {
       const renter = await manager.findOne(Renter, {
         where: { id, owner: { id: owner.id } },
-        relations: ['documents', 'pricing'],
+        relations: ['documents', 'pricing', 'electricityMeter'],
       });
 
       if (!renter) throw new NotFoundException(RENTER_ERROR_MESSAGE.NOT_FOUND);
+
+      this.isRenterUpdateable(renter);
+
+      if (
+        data.status === RenterStatus.LEFT ||
+        data.status === RenterStatus.REMOVE
+      ) {
+        renter.status = data.status;
+        const electricityMeter = await manager.findOne(ElectricityMeter, {
+          where: { id: renter.electricityMeter.id },
+        });
+        electricityMeter!.state = MeterState.INACTIVE;
+        await manager.save(electricityMeter);
+        return await manager.save(renter);
+      }
 
       if (data.contactNumbers) {
         Object.assign(renter.contactNumbers, data.contactNumbers);
@@ -205,6 +221,15 @@ export class RenterService {
       Object.assign(renter, renterFields, { owner: owner.id });
       return await manager.save(renter);
     });
+  }
+
+  private isRenterUpdateable(renter: Renter) {
+    if (
+      renter.status === RenterStatus.REMOVE ||
+      renter.status === RenterStatus.LEFT
+    ) {
+      throw new ConflictException("Removed or left renter can't be update");
+    }
   }
 
   private async handlePricing(
