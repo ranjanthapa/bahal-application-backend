@@ -12,7 +12,7 @@ export class ElectricityMeter {
   meterName: string;
 
   @Column({ type: 'int' })
-  previouseMonthUnit: number;
+  previousMonthUnit: number;
 
   @Column({ type: 'date' })
   previousUnitDate: Date;
