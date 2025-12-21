@@ -3,7 +3,7 @@ import { BillStatus } from '../enums/bill-status.enum';
 
 export const BillSchema = z.object({
   electricityUnits: z.coerce.number().nonnegative(),
-  billingMonth: z.coerce.date(),
+  billingDate: z.coerce.date(),
   note: z.string().min(3).max(250).optional(),
   status: z.nativeEnum(BillStatus),
   otherCharges: z

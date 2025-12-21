@@ -4,11 +4,12 @@ import { BillStatus } from '../enums/bill-status.enum';
 export const BillPreviewSchema = z.object({
   totalAmount: z.string(),
   totalRoomRent: z.string(),
-  electricityAmountPerUnit: z.string(),
-  totalElectricityAmount: z.string(),
-  totalElectricityConsumed: z.string(),
+  electricityChargePerUnit: z.string(),
+  totalElectricityCharge: z.string(),
+  electricityUnits: z.string(),
+  electricityConsumed: z.string(),
   billingDate: z.coerce.date(),
-  waterAmount: z.string(),
+  waterCharge: z.string(),
   note: z.string().nullable(),
   status: z.nativeEnum(BillStatus),
   otherCharges: z
@@ -18,9 +19,10 @@ export const BillPreviewSchema = z.object({
         amount: z.coerce.number().positive(),
       }),
     )
-    .optional(),
+    .nullable(),
   renter: z.string(),
   owner: z.string(),
+  electricitymeterId: z.string(),
 });
 
 export type BillPreviewDTO = z.infer<typeof BillPreviewSchema>;

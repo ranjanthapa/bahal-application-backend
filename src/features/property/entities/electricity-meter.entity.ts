@@ -11,8 +11,8 @@ export class ElectricityMeter {
   @Column({ type: 'varchar', length: 30 })
   meterName: string;
 
-  @Column({ type: 'int' })
-  previousMonthUnit: number;
+  @Column({ type: 'decimal' })
+  previousMonthUnit: string;
 
   @Column({ type: 'date' })
   previousUnitDate: Date;

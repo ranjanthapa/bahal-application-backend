@@ -4,6 +4,7 @@ import { JwtPayload } from 'src/common/types/jwt-payload.type';
 import { Repository } from 'typeorm';
 import { ElectricityMeter } from '../entities/electricity-meter.entity';
 import { CreateElectricityMeterDTO } from '../schemas/electricity-meter.schema';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class ElectricityMeterService {
@@ -18,7 +19,9 @@ export class ElectricityMeterService {
     owner: JwtPayload,
   ) {
     const electricityMeter = this.electricityMeterRepo.create({
-      ...data,
+      previousMonthUnit: Decimal(data.previousMonthUnit).toFixed(2),
+      meterName: data.meterName,
+      previousUnitDate: data.previousUnitDate,
       owner: { id: owner.id },
       property: { id: propertyId },
     });

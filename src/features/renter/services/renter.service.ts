@@ -96,44 +96,44 @@ export class RenterService {
     return renter;
   }
 
-  async findRenterPricing(renterId: string, ownerId: string) {
-    const renter = await this.renterRepo
+  async findRenterBillingDetails(renterId: string, ownerId: string) {
+    const base = this.renterRepo
       .createQueryBuilder('renter')
-      .select(['renter.setGlobalPrice'])
+      .leftJoin('renter.property', 'property')
+      .leftJoin('renter.electricityMeter', 'eM')
+      .select([
+        'renter.numberOfRooms as "numberOfRoom"',
+        'eM.id as "meterId"',
+        'eM.previousUnitDate as "previousUnitDate"',
+        'eM.previousMonthUnit as "previousMonthUnit"',
+        'renter.setGlobalPrice as "setGlobalPrice"',
+      ])
       .where('renter.id = :renterId', { renterId })
-      .andWhere('renter.owner = :ownerId', { ownerId })
-      .getRawOne();
+      .andWhere('renter.owner = :ownerId', { ownerId });
+
+    const renter = await base.getRawOne();
+
     if (!renter) {
       throw new NotFoundException('Renter not found');
     }
-
-    const isGlobal = renter.renter_set_global_price;
+    const isGlobal = renter.setglobalprice;
     if (isGlobal) {
-      return await this.renterRepo
-        .createQueryBuilder('renter')
-        .leftJoin('renter.property', 'property')
-        .select([
-          'renter.numberOfRooms as "numberOfRoom"',
-          'property.rentPerRoom AS "rentPerRoom"',
-          'property.waterRate AS "waterRate"',
-          'property.electricityRate AS "electricityChargePerUnit"',
-        ])
-        .where('renter.id =:renterId', { renterId })
-        .andWhere('renter.owner =:ownerId', { ownerId })
-        .getRawOne();
+      base.addSelect([
+        'property.rentPerRoom AS "rentPerRoom"',
+        'property.waterRate AS "waterRate"',
+        'property.electricityRate AS "electricityChargePerUnit"',
+      ]);
+    } else {
+      base
+        .leftJoin('renter.pricing', 'pricing')
+        .addSelect([
+          'pricing.rentPerRoom AS "rentPerRoom"',
+          'pricing.waterRate AS "waterRate"',
+          'pricing.electricityRate AS "electricityChargePerUnit"',
+        ]);
     }
-    return await this.renterRepo
-      .createQueryBuilder('renter')
-      .leftJoin('renter.pricing', 'pricing')
-      .select([
-        'renter.numberOfRooms as "numberOfRoom"',
-        'pricing.rentPerRoom AS "rentPerRoom"',
-        'pricing.waterRate AS "waterRate"',
-        'pricing.electricityRate AS "electricityChargePerUnit"',
-      ])
-      .where('renter.id =:renterId', { renterId })
-      .andWhere('renter.owner = :ownerId', { ownerId })
-      .getRawOne();
+
+    return await base.getRawOne();
   }
 
   async getRenterById(id: string, owner: JwtPayload): Promise<Renter> {
