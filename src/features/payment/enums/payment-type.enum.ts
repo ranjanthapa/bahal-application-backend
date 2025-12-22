@@ -1,4 +1,5 @@
 export enum PaymentType {
     PARTIAL='partial',
-    FULL='full'
+    FULL='full',
+    ADVANCE='advance'
 }

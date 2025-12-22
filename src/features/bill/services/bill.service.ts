@@ -109,9 +109,9 @@ export class BillService {
 
   async update(id: string, data: UpdateBillDto) {
     const bill = await this.getBillById(id);
-    if (bill.status === BillStatus.PAID) {
-      throw new BadRequestException(BILL_ERROR_MESSAGE.UPDATE_PAID_BILL);
-    }
+    // if (bill.status === BillStatus.PAID) {
+    //   throw new BadRequestException(BILL_ERROR_MESSAGE.UPDATE_PAID_BILL);
+    // }
 
     if (bill.status === BillStatus.CANCEL) {
       throw new BadRequestException(BILL_ERROR_MESSAGE.UPDATE_CANCELLED_BILL);

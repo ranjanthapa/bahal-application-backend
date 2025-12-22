@@ -6,9 +6,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BillStatus } from '../enums/bill-status.enum';
+import { PaymentStatus } from 'src/features/payment/enums/payment-status.enum';
 
 @Entity('bills')
 export class Bill extends TimeStampedEntity {
@@ -44,6 +45,9 @@ export class Bill extends TimeStampedEntity {
 
   @Column({ type: 'enum', enum: BillStatus })
   status: BillStatus;
+
+  @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.UNPAID })
+  paymentStatus: PaymentStatus;
 
   @Column({ type: 'jsonb', nullable: true })
   otherCharges: object | null;

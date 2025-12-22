@@ -9,7 +9,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
       const reflector = app.get(Reflector); // Nest injects Reflector
 
-    app.useGlobalInterceptors(new ResponseInterceptor(reflector));
+    // app.useGlobalInterceptors(new ResponseInterceptor(reflector));
  
     await app.listen(port);
     Logger.log(`Running on http://localhost:${port}`);
