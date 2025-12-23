@@ -11,12 +11,14 @@ import { Payment } from '../entities/payment.entity';
 import { PaymentDTO } from '../schemas/payment.schema';
 import Decimal from 'decimal.js';
 import { PaymentStatus } from '../enums/payment-status.enum';
+import { BillPaymentsSummary } from '../interfaces/bill-payment-summary';
 
 @Injectable()
 export class PaymentService {
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepo: Repository<Payment>,
+    @InjectRepository(Bill) private readonly billRepo: Repository<Bill>,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -33,12 +35,25 @@ export class PaymentService {
         );
       }
 
+      if (bill.paymentStatus === PaymentStatus.FULLYPAID) {
+        throw new UnprocessableEntityException(
+          'Cannot make payment. Bill is already fully paid.',
+        );
+      }
+
       const { receivedAmount, ...otherField } = paymentDTO;
-      const parsedReceivedAmount = new Decimal(paymentDTO.receivedAmount);
-      const overPayment = parsedReceivedAmount.greaterThan(bill.totalAmount);
-      const returnAmount = overPayment
-        ? parsedReceivedAmount.minus(bill.totalAmount)
-        : Decimal(0);
+
+      const billPaymentsSummary = await this.getBillPaymentsSummary(billId);
+      console.log(billPaymentsSummary);
+      const parsedReceivedAmount = new Decimal(receivedAmount);
+      const overOrEqualPayment = parsedReceivedAmount.greaterThanOrEqualTo(
+        billPaymentsSummary.dueAmount,
+      ); 
+      const returnAmount = overOrEqualPayment
+        ? parsedReceivedAmount
+            .plus(billPaymentsSummary.totalReceived)
+            .minus(billPaymentsSummary.totalAmount)
+        : new Decimal(0);
 
       const payment = manager.create(Payment, {
         ...otherField,
@@ -48,7 +63,8 @@ export class PaymentService {
       });
 
       await manager.save(payment);
-      if (overPayment) {
+
+      if (overOrEqualPayment) {
         bill.paymentStatus = PaymentStatus.FULLYPAID;
       } else {
         bill.paymentStatus = PaymentStatus.PARTIAL;
@@ -57,5 +73,28 @@ export class PaymentService {
       await manager.save(bill);
       return payment;
     });
+  }
+
+  async getBillPaymentsSummary(billId: string): Promise<BillPaymentsSummary> {
+    const paymentsSummary = await this.billRepo
+      .createQueryBuilder('b')
+      .select('b.id', 'billId')
+      .addSelect('b.totalAmount', 'totalAmount')
+      .addSelect(
+        'COALESCE(SUM(p.received_amount - COALESCE(p.return_amount, 0)), 0)',
+        'totalReceived',
+      )
+      .leftJoin('payment', 'p', 'p.bill_id = b.id')
+      .where('b.id = :billId', { billId })
+      .groupBy('b.id')
+      .addGroupBy('b.totalAmount')
+      .getRawOne();
+
+    return {
+      ...paymentsSummary,
+      dueAmount: Decimal(paymentsSummary.totalAmount)
+        .minus(Decimal(paymentsSummary.totalReceived))
+        .toFixed(2),
+    };
   }
 }
