@@ -48,7 +48,7 @@ export class PaymentService {
       const parsedReceivedAmount = new Decimal(receivedAmount);
       const overOrEqualPayment = parsedReceivedAmount.greaterThanOrEqualTo(
         billPaymentsSummary.dueAmount,
-      ); 
+      );
       const returnAmount = overOrEqualPayment
         ? parsedReceivedAmount
             .plus(billPaymentsSummary.totalReceived)
@@ -89,6 +89,10 @@ export class PaymentService {
       .groupBy('b.id')
       .addGroupBy('b.totalAmount')
       .getRawOne();
+      
+    if (!paymentsSummary) {
+      throw new NotFoundException('No bill found with the given id');
+    }
 
     return {
       ...paymentsSummary,
@@ -96,5 +100,12 @@ export class PaymentService {
         .minus(Decimal(paymentsSummary.totalReceived))
         .toFixed(2),
     };
+  }
+
+  async getPaymentsByBillId(billId: string) {
+    const payments = await this.paymentRepo.find({
+      where: { bill: { id: billId } },
+    });
+    return payments;
   }
 }
