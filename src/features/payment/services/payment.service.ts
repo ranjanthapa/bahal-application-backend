@@ -44,7 +44,6 @@ export class PaymentService {
       const { receivedAmount, ...otherField } = paymentDTO;
 
       const billPaymentsSummary = await this.getBillPaymentsSummary(billId);
-      console.log(billPaymentsSummary);
       const parsedReceivedAmount = new Decimal(receivedAmount);
       const overOrEqualPayment = parsedReceivedAmount.greaterThanOrEqualTo(
         billPaymentsSummary.dueAmount,
@@ -89,7 +88,7 @@ export class PaymentService {
       .groupBy('b.id')
       .addGroupBy('b.totalAmount')
       .getRawOne();
-      
+
     if (!paymentsSummary) {
       throw new NotFoundException('No bill found with the given id');
     }
