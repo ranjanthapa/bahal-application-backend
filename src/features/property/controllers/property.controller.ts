@@ -29,6 +29,12 @@ import {
 } from '../schemas/electricity-meter.schema';
 import { ElectricityMeterService } from '../services/electricity-meter.service';
 import { RenterService } from 'src/features/renter/services/renter.service';
+import { ZodQuery } from 'src/common/decorators/zod-query.decorator';
+import {
+  PaginationDto,
+  paginationSchema,
+} from 'src/common/schemas/pagination.schema';
+import { SkipGlobalInterceptors } from 'src/common/decorators/skip-global.decorator';
 
 @Controller('properties')
 export class PropertyController {
@@ -54,11 +60,7 @@ export class PropertyController {
     @CurrentUser() user: JwtPayload,
   ) {
     const property = await this.propertyService.getPropertyById(id, user);
-    return await this.renterService.create(
-      property,
-      renterDto,
-      user,
-    );
+    return await this.renterService.create(property, renterDto, user);
   }
 
   @Get()
@@ -105,6 +107,21 @@ export class PropertyController {
     return await this.electricityMeterService.create(
       id,
       electricityMeterDTO,
+      user,
+    );
+  }
+
+  @Get('/:id/electricity-meters')
+  @SkipGlobalInterceptors()
+  async getPropertyElectricityMeter(
+    @Param('id', new UUIDValidationPipe(PROPERTY_ERROR_MESSAGE.INVALID_ID))
+    propertyId: string,
+    @ZodQuery(paginationSchema) paginationDTO: PaginationDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return await this.electricityMeterService.getMetersByProperitesId(
+      propertyId,
+      paginationDTO,
       user,
     );
   }

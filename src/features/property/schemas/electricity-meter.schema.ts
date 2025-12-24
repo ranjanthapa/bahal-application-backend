@@ -6,4 +6,11 @@ export const ElectricitySchema = z.object({
   previousUnitDate: z.coerce.date(),
 });
 
+export const UpdateElectricityMeterSchema = ElectricitySchema.pick({
+  meterName: true,
+});
+
 export type CreateElectricityMeterDTO = z.infer<typeof ElectricitySchema>;
+export type UpdateElectricityMeterDTO = z.infer<
+  typeof UpdateElectricityMeterSchema
+>;
