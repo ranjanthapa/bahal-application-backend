@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import Decimal from 'decimal.js';
 import { RENTER_ERROR_MESSAGE } from 'src/common/constants/error-message.constants';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
+import { ElectricityMeter } from 'src/features/property/entities/electricity-meter.entity';
 import { Property } from 'src/features/property/entities/property.entity';
+import { MeterState } from 'src/features/property/enums/meter-state.enum';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { ContactNumber } from '../entities/contact-number.entity';
 import { RenterDocument } from '../entities/renter-document.entity';
@@ -11,6 +17,7 @@ import { RenterPricing } from '../entities/renter-pricing.entity';
 import { Renter } from '../entities/renter.entity';
 import { RenterPricingDTO } from '../schemas/renter-pricing.schema';
 import { RenterDTO, UpdateRenterDTO } from '../schemas/renter.schema';
+import { RenterStatus } from '../enums/renter-status.enum';
 
 @Injectable()
 export class RenterService {
@@ -25,25 +32,39 @@ export class RenterService {
     owner: JwtPayload,
   ): Promise<Renter> {
     return await this.dataSource.transaction(async (manager) => {
-      const { pricing, ...rest } = renterDto;
+      const { pricing, setGlobalPrice, electricityMeterId, ...rest } =
+        renterDto;
+      const electricityMeter = await manager.findOne(ElectricityMeter, {
+        where: { id: electricityMeterId },
+      });
 
-      if (renterDto.setGlobalPrice) {
-        const renter = manager.create(Renter, {
-          ...rest,
-          owner: { id: owner.id },
-          property: property,
-        });
-        return await manager.save(renter);
-      } else {
-        const parsedPricing = this.parseIntoDecimal(pricing!);
-        const renter = manager.create(Renter, {
-          ...renterDto,
-          pricing: parsedPricing,
-          owner: { id: owner.id },
-          property: property,
-        });
-        return await manager.save(renter);
+      if (!electricityMeter) {
+        throw new NotFoundException('Electricity meter not found');
       }
+
+      if (electricityMeter.state === MeterState.ACTIVE) {
+        throw new ConflictException('Electricity meter is already in use');
+      }
+
+      const renter = manager.create(Renter, {
+        ...rest,
+        setGlobalPrice,
+        electricityMeter: { id: electricityMeterId },
+        owner: { id: owner.id },
+        property: { id: property.id },
+      });
+
+      if (!setGlobalPrice && pricing) {
+        const parsedPricing = this.parseIntoDecimal(pricing);
+        renter.pricing = manager.create(RenterPricing, parsedPricing);
+      }
+
+      const savedRenter = await this.renterRepo.save(renter);
+      electricityMeter.state = MeterState.ACTIVE;
+
+      await manager.save(electricityMeter);
+
+      return savedRenter;
     });
   }
 
@@ -75,44 +96,44 @@ export class RenterService {
     return renter;
   }
 
-  async findRenterPricing(renterId: string, ownerId: string) {
-    const renter = await this.renterRepo
+  async findRenterBillingDetails(renterId: string, ownerId: string) {
+    const base = this.renterRepo
       .createQueryBuilder('renter')
-      .select(['renter.setGlobalPrice'])
+      .leftJoin('renter.property', 'property')
+      .leftJoin('renter.electricityMeter', 'eM')
+      .select([
+        'renter.numberOfRooms as "numberOfRoom"',
+        'eM.id as "meterId"',
+        'eM.previousUnitDate as "previousUnitDate"',
+        'eM.previousMonthUnit as "previousMonthUnit"',
+        'renter.setGlobalPrice as "setGlobalPrice"',
+      ])
       .where('renter.id = :renterId', { renterId })
-      .andWhere('renter.owner = :ownerId', { ownerId })
-      .getRawOne();
+      .andWhere('renter.owner = :ownerId', { ownerId });
+
+    const renter = await base.getRawOne();
+
     if (!renter) {
       throw new NotFoundException('Renter not found');
     }
-
-    const isGlobal = renter.renter_set_global_price;
+    const isGlobal = renter.setglobalprice;
     if (isGlobal) {
-      return await this.renterRepo
-        .createQueryBuilder('renter')
-        .leftJoin('renter.property', 'property')
-        .select([
-          'renter.numberOfRooms as "numberOfRoom"',
-          'property.rentPerRoom AS "rentPerRoom"',
-          'property.waterRate AS "waterRate"',
-          'property.electricityRate AS "electricityRate"',
-        ])
-        .where('renter.id =:renterId', { renterId })
-        .andWhere('renter.owner =:ownerId', { ownerId })
-        .getRawOne();
+      base.addSelect([
+        'property.rentPerRoom AS "rentPerRoom"',
+        'property.waterRate AS "waterRate"',
+        'property.electricityRate AS "electricityChargePerUnit"',
+      ]);
+    } else {
+      base
+        .leftJoin('renter.pricing', 'pricing')
+        .addSelect([
+          'pricing.rentPerRoom AS "rentPerRoom"',
+          'pricing.waterRate AS "waterRate"',
+          'pricing.electricityRate AS "electricityChargePerUnit"',
+        ]);
     }
-    return await this.renterRepo
-      .createQueryBuilder('renter')
-      .leftJoin('renter.pricing', 'pricing')
-      .select([
-        'renter.numberOfRooms as "numberOfRoom"',
-        'pricing.rentPerRoom AS "rentPerRoom"',
-        'pricing.waterRate AS "waterRate"',
-        'pricing.electricityRate AS "electricityRate"',
-      ])
-      .where('renter.id =:renterId', { renterId })
-      .andWhere('renter.owner = :ownerId', { ownerId })
-      .getRawOne();
+
+    return await base.getRawOne();
   }
 
   async getRenterById(id: string, owner: JwtPayload): Promise<Renter> {
@@ -162,10 +183,25 @@ export class RenterService {
     return await this.dataSource.transaction(async (manager) => {
       const renter = await manager.findOne(Renter, {
         where: { id, owner: { id: owner.id } },
-        relations: ['documents', 'pricing'],
+        relations: ['documents', 'pricing', 'electricityMeter'],
       });
 
       if (!renter) throw new NotFoundException(RENTER_ERROR_MESSAGE.NOT_FOUND);
+
+      this.isRenterUpdateable(renter);
+
+      if (
+        data.status === RenterStatus.LEFT ||
+        data.status === RenterStatus.REMOVE
+      ) {
+        renter.status = data.status;
+        const electricityMeter = await manager.findOne(ElectricityMeter, {
+          where: { id: renter.electricityMeter.id },
+        });
+        electricityMeter!.state = MeterState.INACTIVE;
+        await manager.save(electricityMeter);
+        return await manager.save(renter);
+      }
 
       if (data.contactNumbers) {
         Object.assign(renter.contactNumbers, data.contactNumbers);
@@ -185,6 +221,15 @@ export class RenterService {
       Object.assign(renter, renterFields, { owner: owner.id });
       return await manager.save(renter);
     });
+  }
+
+  private isRenterUpdateable(renter: Renter) {
+    if (
+      renter.status === RenterStatus.REMOVE ||
+      renter.status === RenterStatus.LEFT
+    ) {
+      throw new ConflictException("Removed or left renter can't be update");
+    }
   }
 
   private async handlePricing(

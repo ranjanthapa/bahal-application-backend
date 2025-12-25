@@ -1,3 +1,7 @@
+import { TimeStampedEntity } from 'src/common/entities/base-timestampz.entity';
+import { ElectricityMeter } from 'src/features/property/entities/electricity-meter.entity';
+import { Property } from 'src/features/property/entities/property.entity';
+import { User } from 'src/features/user/entities/user.entity';
 import {
   Column,
   Entity,
@@ -6,13 +10,10 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from 'src/features/user/entities/user.entity';
+import { RenterStatus } from '../enums/renter-status.enum';
 import { ContactNumber } from './contact-number.entity';
 import { RenterDocument } from './renter-document.entity';
-import { RenterStatus } from '../enums/renter-status.enum';
-import { TimeStampedEntity } from 'src/common/entities/base-timestampz.entity';
 import { RenterPricing } from './renter-pricing.entity';
-import { Property } from 'src/features/property/entities/property.entity';
 
 @Entity('renters')
 export class Renter extends TimeStampedEntity {
@@ -59,6 +60,9 @@ export class Renter extends TimeStampedEntity {
   })
   @JoinColumn({ name: 'pricing_id' })
   pricing: RenterPricing | null;
+
+  @ManyToOne(()=> ElectricityMeter)
+  electricityMeter: ElectricityMeter;
 
   @ManyToOne(() => User)
   owner: User;

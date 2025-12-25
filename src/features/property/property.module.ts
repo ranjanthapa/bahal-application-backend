@@ -4,11 +4,17 @@ import { RenterModule } from '../renter/renter.module';
 import { PropertyController } from './controllers/property.controller';
 import { Property } from './entities/property.entity';
 import { PropertyService } from './services/property.service';
+import { ElectricityMeter } from './entities/electricity-meter.entity';
+import { ElectricityMeterService } from './services/electricity-meter.service';
+import { ElectricityMeterController } from './controllers/electricity-meter.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Property]), RenterModule],
-  controllers: [PropertyController],
-  providers: [PropertyService],
-  exports: [PropertyService],
+  imports: [
+    TypeOrmModule.forFeature([Property, ElectricityMeter]),
+    RenterModule,
+  ],
+  controllers: [PropertyController, ElectricityMeterController],
+  providers: [PropertyService, ElectricityMeterService],
+  exports: [PropertyService, ElectricityMeterService],
 })
 export class PropertyModule {}

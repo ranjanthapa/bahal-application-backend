@@ -33,10 +33,10 @@ export const RenterSchema = z.object({
     .int()
     .positive({ message: 'Number of rooms must be greater than 0' }),
 
+  electricityMeterId: z.string().uuid({ message: 'Invalid id' }),
   setGlobalPrice: z.boolean().default(true),
   pricing: RenterPricingSchema.optional(),
 });
-
 
 export const UpdateRenterSchema = RenterSchema.extend({
   contactNumbers: UpdateContactNumberSchema.optional(),
