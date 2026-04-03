@@ -13,8 +13,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-    private  userService: UserService,
-    private  jwtService: JwtService,
+    private userService: UserService,
+    private jwtService: JwtService,
   ) {}
 
   async register(userDto: CreateUserDTO) {
@@ -36,6 +36,7 @@ export class AuthService {
   async login(user: User) {
     const payload: JwtPayload = {
       id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
       phoneNumber: user.phoneNumber,
     };
     return {

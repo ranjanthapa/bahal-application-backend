@@ -7,12 +7,13 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   try {
     const app = await NestFactory.create(AppModule);
-      const reflector = app.get(Reflector); // Nest injects Reflector
+    const reflector = app.get(Reflector); // Nest injects Reflector
 
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
- 
-    await app.listen(port);
-    Logger.log(`Running on http://localhost:${port}`);
+
+    await app.listen(4000, '0.0.0.0');
+    Logger.log(app.getUrl());
+    Logger.log(`Running on http://localhost:${4000}`);
   } catch (e) {
     Logger.log(e.message);
   }
