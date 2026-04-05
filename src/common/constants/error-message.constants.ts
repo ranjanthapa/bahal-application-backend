@@ -7,7 +7,7 @@ export const AUTH_ERROR_MESSAGES = {
 export const USER_ERROR_MESSAGES = {
   EMAIL_ALREADY_EXISTS: 'Email already exists',
   PHONE_ALREADY_EXISTS: 'Phone number already exists',
-  USER_ALREADY_EXISTS: 'User already exists',
+  USER_ALREADY_EXISTS: 'An account with this phone/email already exists',
   INVALID_USER_ID: 'Invalid user ID',
   USER_CREATION_FAILED: 'Failed to create user',
 };

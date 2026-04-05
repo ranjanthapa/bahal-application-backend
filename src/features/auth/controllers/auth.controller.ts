@@ -16,7 +16,7 @@ export class AuthController {
   @PublicRoute()
   @Post('/sign-up')
   async signUp(@ZodBody(UserSchema) userDto: CreateUserDTO) {
-    return await this.authService.register(userDto);
+    await this.authService.register(userDto);
   }
 
   @PublicRoute()
