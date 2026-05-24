@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { CoreModule } from './core/core.module';
 import { FeaturesModule } from './features/features.module';
 import { CommonModule } from './common/common.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { CommonModule } from './common/common.module';
     CoreModule,
     FeaturesModule,
     CommonModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

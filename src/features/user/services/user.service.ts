@@ -1,19 +1,20 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { CreateUserDTO } from '../schemas/user.schema';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../entities/user.entity';
-import { Repository } from 'typeorm';
-import { hashPassword } from 'src/features/auth/utils/hash.util';
 import { USER_ERROR_MESSAGES } from 'src/common/constants/error-message.constants';
+import { hashPassword } from 'src/features/auth/utils/hash.util';
+import { User } from '../entities/user.entity';
+import { UserRepository } from '../repository/user.repository';
+import { CreateUserDto } from '../schemas/user.schema';
+import { DataSource, EntityManager } from 'typeorm';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectRepository(User) private readonly userRepo: Repository<User>,
-  ) {}
-  async create(userDto: CreateUserDTO): Promise<User> {
-    const isUserExists = await this.userRepo.findOne({
-      where: { phoneNumber: userDto.phoneNumber },
+  constructor(private userRepo: UserRepository) {}
+
+  async create(userDto: CreateUserDto, manager?: EntityManager): Promise<User> {
+    const { email, phoneNumber } = userDto;
+    const isUserExists = await this.userRepo.isUserExist({
+      email,
+      phoneNumber,
     });
 
     if (isUserExists) {
@@ -21,15 +22,12 @@ export class UserService {
     }
 
     const password = await hashPassword(userDto.password);
-    const user = this.userRepo.create({ ...userDto, password });
-    return await this.userRepo.save(user);
-  }
-
-  async findByPhoneNumber(phoneNumber: string): Promise<User | null> {
-    return await this.userRepo.findOne({ where: { phoneNumber: phoneNumber } });
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return await this.userRepo.findOne({ where: { email: email } });
+    if (manager) {
+      const user = manager.create(User, { ...userDto, password });
+      await manager.save(user);
+      return user;
+    }
+    
+    return await this.userRepo.create({ ...userDto, password });
   }
 }

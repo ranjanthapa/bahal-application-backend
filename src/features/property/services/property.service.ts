@@ -16,7 +16,7 @@ export class PropertyService {
     private readonly propetyRepo: Repository<Property>,
   ) {}
 
-  async create(propertyDto: PropertyDTO, user: JwtPayload) {
+  async addProperty(propertyDto: PropertyDTO, user: JwtPayload) {
     const property = this.propetyRepo.create({
       ...propertyDto,
       user: { id: user.id },

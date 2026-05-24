@@ -39,7 +39,6 @@ export class BillService {
     const previousMonthUnit = new Decimal(
       renterBillingDetail.previousMonthUnit,
     );
-    
     const electricityConsumedUnit = new Decimal(data.electricityUnits).minus(
       previousMonthUnit,
     );

@@ -7,6 +7,13 @@ import { BillModule } from './bill/bill.module';
 import { PaymentModule } from './payment/payment.module';
 
 @Module({
-  imports: [UserModule, AuthModule, PropertyModule, RenterModule, BillModule, PaymentModule]
+  imports: [
+    UserModule,
+    AuthModule,
+    PropertyModule,
+    RenterModule,
+    BillModule,
+    PaymentModule
+  ],
 })
 export class FeaturesModule {}

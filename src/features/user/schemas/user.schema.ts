@@ -9,11 +9,11 @@ export const UserSchema = z.object({
   email: z.string().email().optional(),
   phoneNumber: z.string().regex(/^(\+977)?(98|97)\d{8}$/, {
     message: 'Invalid number, required valid nepali number',
-  }),
+  }).optional(),
   avatar: z.string().optional(),
   password: z.string(),
 });
 
 // export type CreateUserDTO = z.infer<typeof UserSchema>;
 
-export class CreateUserDTO extends createZodDto(UserSchema) {}
+export class CreateUserDto extends createZodDto(UserSchema) {}

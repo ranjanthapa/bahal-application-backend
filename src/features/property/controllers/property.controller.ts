@@ -49,7 +49,7 @@ export class PropertyController {
     @ZodBody(PropertySchema) propertyDto: PropertyDTO,
     @CurrentUser() user: JwtPayload,
   ) {
-    return await this.propertyService.create(propertyDto, user);
+    return await this.propertyService.addProperty(propertyDto, user);
   }
 
   @Post(':id/renters')

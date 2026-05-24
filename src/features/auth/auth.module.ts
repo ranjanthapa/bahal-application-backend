@@ -6,9 +6,11 @@ import { UserModule } from '../user/user.module';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { LocalStrategy } from './strategies/local.strategy';
+import { EmailModule } from 'src/shared/email/email.module';
+import { CacheModule } from 'src/shared/cache/cache.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), UserModule, JwtAuthModule],
+  imports: [TypeOrmModule.forFeature([User]), UserModule, JwtAuthModule, EmailModule, CacheModule],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy],
   exports: [AuthService],

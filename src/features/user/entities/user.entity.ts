@@ -16,9 +16,9 @@ export class User extends TimeStampedEntity {
   lastName: string;
 
   @Column({ unique: true, nullable: true })
-  email: string;      
+  email: string ;      
 
-  @Column({ length: 10, unique: true })
+  @Column({ length: 10, unique: true , nullable: true})
   phoneNumber: string;
 
   @Column({ nullable: true })
@@ -26,4 +26,7 @@ export class User extends TimeStampedEntity {
 
   @Column()
   password: string;
+
+  @Column({type: 'boolean', default: false})
+  isVerify: boolean
 }

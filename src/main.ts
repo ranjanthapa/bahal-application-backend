@@ -23,7 +23,7 @@ async function bootstrap() {
     await app.listen(4000, '0.0.0.0');
     Logger.log(app.getUrl());
     Logger.log(`Running on http://localhost:${4000}`);
-  } catch (e) {
+  } catch (e: any) {
     Logger.log(e.message);
   }
 }
