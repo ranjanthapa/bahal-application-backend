@@ -8,7 +8,7 @@ export class AuthCacheService {
 
   async setOTP(email: string, otp: string): Promise<void> {
     try {
-      const TTL = 5 * 60;
+      const TTL = 3 * 60;
       const key = `otp:${email}`;
       await this.redis.set(key, otp, 'EX', TTL);
     } catch (error) {

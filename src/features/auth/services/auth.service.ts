@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { JwtPayload } from 'src/common/types/jwt-payload.type';
@@ -10,6 +10,7 @@ import { AuthCacheService } from 'src/shared/cache/services/auth.cache.service';
 import { EmailService } from 'src/shared/email/services/email.service';
 import { DataSource } from 'typeorm';
 import { comparePassword } from '../utils/hash.util';
+import { VerifyOTPDto } from '../schemas/verify-otp.schema';
 
 @Injectable()
 export class AuthService {
@@ -45,6 +46,24 @@ export class AuthService {
 
   private generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async verifyOtp(data: VerifyOTPDto) {
+    const { email, otp } = data;
+    const storedOtp = await this.authCache.getOTP(email);
+    if (!storedOtp) {
+      throw new BadRequestException(
+        'OTP expired or not found, please request a new one',
+      );
+    }
+    const isValid = otp === storedOtp;
+    if (!isValid) {
+      throw new BadRequestException('Invalid otp');
+    }
+
+    await this.authCache.deleteOtp(email);
+    await this.userService.update(email, { isVerify: true } as Partial<User>);
+    return { message: 'OTP verified successfully' };
   }
 
   async validateUser(

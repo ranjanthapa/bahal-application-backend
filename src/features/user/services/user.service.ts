@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { USER_ERROR_MESSAGES } from 'src/common/constants/error-message.constants';
 import { hashPassword } from 'src/features/auth/utils/hash.util';
 import { User } from '../entities/user.entity';
@@ -27,7 +31,15 @@ export class UserService {
       await manager.save(user);
       return user;
     }
-    
+
     return await this.userRepo.create({ ...userDto, password });
+  }
+
+  async update(email: string, data: Partial<User>) {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    await this.userRepo.updateByEmail(email, data);
   }
 }

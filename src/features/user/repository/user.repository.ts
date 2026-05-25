@@ -33,4 +33,8 @@ export class UserRepository {
     const user = this.repo.create(data);
     return await this.repo.save(user);
   }
+
+  async updateByEmail(email: string, data: Partial<User>) {
+    return await this.repo.update({ email }, data);
+  }
 }

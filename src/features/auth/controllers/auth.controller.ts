@@ -8,6 +8,7 @@ import {
 import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { AuthService } from '../services/auth.service';
 import { PublicRoute } from 'src/common/decorators/public-route.decorator';
+import { VerifyOTPDto, verifyOTPSchema } from '../schemas/verify-otp.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -17,15 +18,19 @@ export class AuthController {
   @Post('/sign-up')
   async signUp(@ZodBody(UserSchema) userDto: CreateUserDto) {
     await this.authService.register(userDto);
+    return {
+      message: 'User registered sucessfully',
+    };
   }
 
-
-  // @PublicRoute()
-  // @Post('/verify-otp')
-  // async verify(@ZodBody() ){
-
-  // }
-
+  @PublicRoute()
+  @Post('/verify-otp')
+  async verify(@ZodBody(verifyOTPSchema) otpDto: VerifyOTPDto) {
+    await this.authService.verifyOtp(otpDto);
+    return {
+      message: "Otp verify successfull"
+    }
+  }
 
   @PublicRoute()
   @UseGuards(LocalAuthGuard)
